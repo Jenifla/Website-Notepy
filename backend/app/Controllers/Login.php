@@ -54,7 +54,7 @@ class Login extends BaseController
         return $this->respond($response, 200);
     }
 
-public function getUserDataFromToken()
+public function getUserData()
 {
     $key = getenv('JWT_SECRET');
     $header = $this->request->getHeaderLine("Authorization");
@@ -83,7 +83,7 @@ public function getUserDataFromToken()
         $userData = $userModel->where('id_user', $iss)->first();
 
         if ($userData) {
-            return $this->respond(['status' => 200, 'data' => $userData]);
+            return $this->respond($userData);
         } else {
             return $this->failNotFound('User not found');
         }

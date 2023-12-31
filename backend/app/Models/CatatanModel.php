@@ -14,15 +14,6 @@ class CatatanModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = ['id_user', 'id_folder', 'judul', 'isi', 'difavoritkan', 'dihapus', 'tgl_buat', 'tgl_edit', 'timestamp'];
 
-    public function updateLastViewedAt($catatanId)
-    {
-        // Lakukan pembaruan timestamp terakhir dilihat pada catatan dengan ID tertentu
-        $this->set(['timestamp' => date('Y-m-d H:i:s')])->where('id_catatan', $catatanId)->update();
-
-        return $this->affectedRows() > 0; // Memberikan true jika terjadi pembaruan
-    }
-
-
     // Dates
     protected $useTimestamps = false;
     protected $dateFormat    = 'datetime';
@@ -46,4 +37,13 @@ class CatatanModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function updateLastViewedAt($catatanId)
+    {
+        // Lakukan pembaruan timestamp terakhir dilihat pada catatan dengan ID tertentu
+        $this->set(['timestamp' => date('Y-m-d H:i:s')])->where('id_catatan', $catatanId)->update();
+
+        return $this->affectedRows() > 0; // Memberikan true jika terjadi pembaruan
+    }
+
 }

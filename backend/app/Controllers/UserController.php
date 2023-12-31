@@ -56,6 +56,138 @@ class UserController extends ResourceController
         }
     }
 
+
+
+    public function updateProfil()
+    {
+        
+        $key = getenv('JWT_SECRET');
+        $header = $this->request->getHeaderLine("Authorization");
+        $token = null;
+    
+        if (!empty($header)) {
+            if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
+                $token = $matches[1];
+            }
+        }
+
+        // check if token is null or empty
+        if (is_null($token) || empty($token)) {
+            return $this->respond(['error' => 'Access denied'], 401);
+        }
+
+    
+        try {
+            $decoded = JWT::decode($token, new Key($key, 'HS256'));
+            $iss = $decoded->iss;
+        
+            // Dapatkan data pengguna dari database
+            $userModel = new UserModel();
+            $userData = $userModel->find($iss); // Menggunakan find karena id_user unik
+            if ($userData) {
+
+                // Extract data from the request
+                $username = $this->request->getVar('username');
+                $email = $this->request->getVar('email');
+                $password = password_hash($this->request->getVar('password'), PASSWORD_DEFAULT);
+                $status = $this->request->getVar('status');
+                $lokasi = $this->request->getVar('lokasi');
+                $no_tlpn = $this->request->getVar('no_tlpn');
+                $foto_profil = $this->request->getFile('foto_profil');
+
+                // Cek setiap data yang ingin diperbarui
+                // Jika input kosong, gunakan data yang sudah tersimpan di database
+                $data['username'] = !empty($username) ? $username : $userData['username'];
+                $data['email'] = !empty($email) ? $email : $userData['email'];
+                $data['password'] = !empty($password) ? $password : $userData['password'];
+                $data['status'] = !empty($status) ? $status : $userData['status'];
+                $data['lokasi'] = !empty($lokasi) ? $lokasi : $userData['lokasi'];
+                $data['no_tlpn'] = !empty($no_tlpn) ? $no_tlpn : $userData['no_tlpn'];
+                
+                // Handle file upload jika ada file yang dikirim
+                if ($foto_profil && $foto_profil->isValid() && !$foto_profil->hasMoved()) {
+                    $newName = $foto_profil->getRandomName();
+                    $foto_profil->move('./path', $newName);
+                    $data['foto_profil'] = $newName;
+                }
+    
+                $proses = $userModel->update($iss, $data);
+    
+                if ($proses) {
+                    $response = [
+                        'status' => 200,
+                        'messages' => 'Data berhasil diubah',
+                        'data' => $data,
+                    ];
+                } else {
+                    $response = [
+                        'status' => 402,
+                        'messages' => 'Gagal diubah',
+                    ];
+                }
+    
+                return $this->respond($response);
+            }
+            else {
+                return $this->failNotFound('User not found');
+            }
+        } catch (\Exception $e) {
+            return $this->failUnauthorized('Unauthorized' . $e->getMessage());
+        }
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
      public function login()
     {
         $model = new UserModel();
@@ -89,43 +221,7 @@ class UserController extends ResourceController
 
             return $this->respond($response);
         }
-    }
-    // public function getUserData()
-    // {
-    //     // Ambil token dari header Authorization
-    //     $token = $this->request->getHeaderLine('Authorization');
-
-    //     // Pastikan bahwa token ada dan memiliki format yang sesuai
-    //     if (!$token || !preg_match('/Bearer\s(\S+)/', $token, $matches)) {
-    //         return $this->failUnauthorized('Invalid token');
-    //     }
-
-    //     // Ambil bagian token setelah "Bearer "
-    //     $token = $matches[1];
-
-    //     try {
-    //         // Dekode token untuk mendapatkan informasi pengguna
-    //         $key = getenv('JWT_SECRET');
-            
-    //         $decodedToken = JWT::decode($token, new Key($key, 'HS256'));
-    //         $userId = $decodedToken->id; // Misalnya, ID pengguna ada di dalam token
-
-    //         // Gunakan Model untuk mengambil data pengguna dari basis data
-    //         $userModel = new UserModel();
-    //         $userData = $userModel->find($userId);
-
-    //         if (!$userData) {
-    //             return $this->failNotFound('User not found');
-    //         }
-
-    //         // Kirim data pengguna sebagai respons
-    //         return $this->respond(['status' => 200, 'user' => $userData]);
-    //     } catch (\Exception $ex) {
-    //         return $this->failUnauthorized('Unauthorized');
-    //     }
-    // }
-
-    
+    }  
 
 
     public function getUser()

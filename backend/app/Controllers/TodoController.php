@@ -43,7 +43,7 @@ class TodoController extends BaseController
         
         // Ambil data todolist dari database
         $todoModel = new TodolistModel();
-        $todolists = $todoModel->where('dihapus', 0)->findAll();  // Ambil semua todolist dari database
+        $todolists = $todoModel->where('id_user', $userId)->where('dihapus', 0)->findAll();  // Ambil semua todolist dari database
         
         // Loop melalui setiap todolist
         foreach ($todolists as $list) {
@@ -552,6 +552,7 @@ public function getFavorite()
     // Ambil data todolist dari database
     $todoModel = new TodolistModel();
     $todolists = $todoModel
+    ->where('id_user', $userId)
     ->where('dihapus', 0)
     ->where('difavoritkan', 1)
     ->findAll();
@@ -613,26 +614,28 @@ public function kategori($todoId = null)
 
     try {
         $decoded = JWT::decode($token, new Key($key, 'HS256'));
-        $iss = $decoded->iss;
+        $userId = $decoded->iss;
 
-        // Dapatkan data pengguna dari database
-        $userModel = new UserModel();
-        $userData = $userModel->find($iss);
-
-        if ($userData) {
-            $todoModel = new TodolistModel();
-            
-            $todo = $todoModel->find($todoId);
-            // var_dump($existingTodo);
-            if ($todo['id_user'] === $userData['id_user']) {
+        // // Dapatkan data pengguna dari database
+        // $userModel = new UserModel();
+        
+           // Dapatkan data todolist berdasarkan id_user
+        $todoModel = new TodolistModel();
+        $todo = $todoModel->where('id_user', $userId)
+                          ->where('id_todolist', $todoId)
+                          ->first();
+            var_dump(($todo));
+            // Cek apakah $todoId ada dalam daftar todolist yang ditemukan
+            if ($todo) { 
+                    
+                    var_dump($todo);
                     // Dapatkan ID folder dari body atau query string (sesuai dengan kebutuhan)
-                    $folderId = $this->request->getPost('folderId'); // Misalnya, jika ID folder ada di body
+                    $folderId = $this->request->getVar('folderId'); // Misalnya, jika ID folder ada di body
                     // $folderId = $this->request->getVar('folderId'); // Gunakan ini jika ID folder ada di query string
 
                     if (!$folderId) {
                         return $this->fail('Folder ID is required', 400);
                     }
-
                     // Dapatkan data folder dari database
                     $folderModel = new FolderModel();
                     $selectedFolder = $folderModel->find($folderId);
@@ -649,27 +652,178 @@ public function kategori($todoId = null)
 
                     $todoModel->update($todoId, $updatedTodoData);
 
-                    // Ambil data todolist yang sudah diperbarui setelah proses kategorisasi selesai
-                    // $updatedTodo = $todoModel->find($todoId);
-
+                     // Ambil data terbaru catatan setelah diperbarui
+                    $updatedTodolist = $todoModel->find($todoId);
+                    // Dapatkan nama folder yang dipilih
+                    $selectedFolder = $folderModel->find($folderId);
+                    $folderName = $selectedFolder['nama_folder'];
                      // Commit transaksi jika semua query dieksekusi dengan sukses
                     return $this->respond([
                         'message' => 'Todolist categorized successfully',
-                        // 'updatedTodo' => $updatedTodo // Kirim data todolist yang diperbarui ke frontend
+                        'updatedTodolist' => $updatedTodolist, // Kirim data terbaru catatan yang diperbarui ke frontend
+                        'selectedFolderName' => $folderName
                     ]);
-                } else {
+                   
+                }
+                else {
                     return $this->failNotFound('Todolist not found');
                 }
-            } else {
-                return $this->failForbidden('You are not allowed to categorize this todolist');
-            }
         
     } catch (\Exception $e) {// Rollback transaksi jika terjadi kesalahan
         return $this->failUnauthorized('Unauthorized: ' . $e->getMessage());
     }
 }
 
+public function unkategori($todoId = null)
+{
+    $key = getenv('JWT_SECRET');
+    $header = $this->request->getHeaderLine("Authorization");
+    $token = null;
 
+    // Ekstrak token dari header
+    if (!empty($header)) {
+        if (preg_match('/Bearer\s+(.*)$/', $header, $matches)) {
+            $token = $matches[1];
+        }
+    }
+
+    // Periksa jika token kosong atau tidak ada
+    if (is_null($token) || empty($token)) {
+        return $this->respond(['error' => 'Access denied'], 401);
+    }
+
+    try {
+        $decoded = JWT::decode($token, new Key($key, 'HS256'));
+        $userId = $decoded->iss;
+
+        // // Dapatkan data pengguna dari database
+        // $userModel = new UserModel();
+        
+           // Dapatkan data todolist berdasarkan id_user
+        $todoModel = new TodolistModel();
+        $todo = $todoModel->where('id_user', $userId)
+                          ->where('id_todolist', $todoId)
+                          ->first();
+            var_dump(($todo));
+            // Cek apakah $todoId ada dalam daftar todolist yang ditemukan
+            if ($todo) { 
+                    
+                    var_dump($todo);
+                    // // Dapatkan ID folder dari body atau query string (sesuai dengan kebutuhan)
+                    // $folderId = $this->request->getVar('folderId'); // Misalnya, jika ID folder ada di body
+                    // // $folderId = $this->request->getVar('folderId'); // Gunakan ini jika ID folder ada di query string
+
+                    // Dapatkan data folder dari database
+                    $folderModel = new FolderModel();
+                    // $selectedFolder = $folderModel->find($folderId);
+
+                    // if (!$selectedFolder) {
+                    //     return $this->failNotFound('Folder not found');
+                    // }
+
+                    // Lakukan proses kategorisasi todolist ke dalam folder yang dipilih
+                    $updatedTodoData = [
+                        'id_folder' => null // Perbarui ID folder pada todolist
+                        // Anda bisa menambahkan kolom lain yang ingin diubah di sini jika diperlukan
+                    ];
+
+                    $todoModel->update($todoId, $updatedTodoData);
+
+                     // Ambil data terbaru catatan setelah diperbarui
+                    $updatedTodolist = $todoModel->find($todoId);
+                    // Dapatkan nama folder yang dipilih
+                    // $selectedFolder = $folderModel->find($folderId);
+                    // $folderName = $selectedFolder['nama_folder'];
+                     // Commit transaksi jika semua query dieksekusi dengan sukses
+                    return $this->respond([
+                        'message' => 'Todolist uncategorized successfully',
+                        'updatedTodolist' => $updatedTodolist, // Kirim data terbaru catatan yang diperbarui ke frontend
+                        'selectedFolderName' => null
+                    ]);
+                   
+                }
+                else {
+                    return $this->failNotFound('Todolist not found');
+                }
+        
+    } catch (\Exception $e) {// Rollback transaksi jika terjadi kesalahan
+        return $this->failUnauthorized('Unauthorized: ' . $e->getMessage());
+    }
+}
+
+public function getByFolder($folderId = null)
+{
+    $key = getenv('JWT_SECRET');
+    $header = $this->request->getHeaderLine("Authorization");
+    $token = null;
+
+    // Ekstrak token dari header
+    if (!empty($header)) {
+        if (preg_match('/Bearer\s+(.*)$/', $header, $matches)) {
+            $token = $matches[1];
+        }
+    }
+
+    // Periksa jika token kosong atau tidak ada
+    if (is_null($token) || empty($token)) {
+        return $this->respond(['error' => 'Access denied'], 401);
+    }
+
+    try {
+        $decoded = JWT::decode($token, new Key($key, 'HS256'));
+        $userId = $decoded->iss;
+
+        $todoList = [];
+    
+
+        if ($folderId === null) {
+            return $this->fail('Folder ID is required', 400);
+        }
+
+        // Dapatkan catatan dari database berdasarkan ID folder yang sesuai dengan ID pengguna
+        $todoModel = new TodolistModel();
+        $folderNotes = $todoModel->where('id_folder', $folderId)
+                                ->where('id_user', $userId) // Sesuaikan dengan kolom ID pengguna pada tabel catatan
+                                ->where('dihapus', 0) // Hanya catatan yang tidak dihapus
+                                ->findAll();
+
+        // Loop melalui setiap todolist
+        foreach ($folderNotes as $list) {
+            $todoItem = [
+                'id_todolist' => $list['id_todolist'],
+                'judul_todolist' => $list['judul_todolist'],
+                'difavoritkan' => $list['difavoritkan'],
+                'date' => $list['tgl_buat'],
+                'tugas' => [] // Inisialisasi array untuk menampung data tugas
+            ];
+        
+        // Ambil tugas-tugas terkait dengan todolist saat ini
+        $taskModel = new TugasModel();
+        $tasks = $taskModel->where('id_todolist', $list['id_todolist'])->findAll();
+        
+        // Loop melalui setiap tugas dan tambahkan ke todolist saat ini
+        foreach ($tasks as $task) {
+            $todoTask = [
+                'id_tugas' => $task['id_tugas'],
+                'tugas' => $task['tugas'],
+                'completed' => $task['status'] == 1 // Misal status 1 menandakan sudah selesai
+            ];
+            
+            // Tambahkan tugas ke dalam todolist saat ini
+            $todoItem['tugas'][] = $todoTask;
+        }
+
+        $todoList[] = $todoItem;
+    }
+        
+
+       
+            return $this->respond($todoList, 200);
+        
+    } catch (\Exception $e) {
+        return $this->failUnauthorized('Unauthorized' . $e->getMessage());
+    }
+}
 
 
 }

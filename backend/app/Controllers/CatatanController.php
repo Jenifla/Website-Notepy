@@ -633,7 +633,7 @@ public function getByFolder($folderId = null)
     }
 }
 
-public function updateLastViewedAt($catatanId)
+public function riwayat($catatanId)
     {
         $key = getenv('JWT_SECRET');
     $header = $this->request->getHeaderLine("Authorization");

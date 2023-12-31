@@ -9,14 +9,10 @@ $routes->get('/', 'Home::index');
 
 $routes->match(['post', 'options'], 'user/signUp', 'UserController::signUp');
 $routes->match(['post', 'options'], 'user/login', 'Login::index');
-$routes->match(['get', 'options'], 'user/getUserData', 'UserController::getUserData');
-$routes->match(['put', 'options'], 'user/update/(:segment)', 'UserController::update/$1');
-$routes->match(['delete', 'options'], 'user/delete/(:segment)', 'UserController::delete/$1');
+$routes->match(['get', 'options'], 'usersdata', "Login::getUserData", ['filter' => 'cors', 'authFilter']);
+$routes->match(['post', 'options'], 'editprofil', "UserController::updateProfil", ['filter' => 'cors', 'authFilter']);
 
-$routes->match(['get', 'options'], 'users', "User::index", ['filter' => 'authFilter']);
-
-$routes->match(['get', 'options'], 'usersdata', "Login::getUserDataFromToken", ['filter' => 'cors', 'authFilter']);
-
+$routes->get('uploads/(:any)', 'ProfilController::index/$1');
 
 $routes->match(['post', 'options'], 'folder/new', 'FolderController::create', ['filter' => 'cors', 'authFilter']);
 $routes->match(['get', 'options'], 'folder', 'FolderController::index', ['filter' => 'cors', 'authFilter']);
@@ -35,11 +31,13 @@ $routes->match(['put', 'options'], 'catatan/sampah/(:segment)', 'CatatanControll
 $routes->match(['put', 'options'], 'catatan/restore/(:segment)', 'CatatanController::restore/$1', ['filter' => 'cors', 'authFilter']);
 $routes->match(['put', 'options'], 'catatan/favorite/(:segment)', 'CatatanController::favorite/$1', ['filter' => 'cors', 'authFilter']);
 $routes->match(['delete', 'options'], 'catatan/delete/(:segment)', 'CatatanController::delete/$1', ['filter' => 'cors', 'authFilter']);
-$routes->match(['put', 'options'], 'catatan/riwayat/(:segment)', 'CatatanController::updateLastViewedAt/$1', ['filter' => 'cors', 'authFilter']);
+$routes->match(['put', 'options'], 'catatan/riwayat/(:segment)', 'CatatanController::riwayat/$1', ['filter' => 'cors', 'authFilter']);
 
 
 $routes->match(['post', 'options'], 'todolist/new', 'TodoController::create', ['filter' => 'cors', 'authFilter']);
-$routes->match(['post', 'options'], 'todolist/kategori/(:segment)', 'TodoController::kategori', ['filter' => 'cors', 'authFilter']);
+$routes->match(['post', 'options'], 'todolist/kategori/(:segment)', 'TodoController::kategori/$1', ['filter' => 'cors', 'authFilter']);
+$routes->match(['put', 'options'], 'todolist/unkategori/(:segment)', 'TodoController::unkategori/$1', ['filter' => 'cors', 'authFilter']);
+$routes->match(['get', 'options'], 'todolist/folder/(:segment)', 'TodoController::getByFolder/$1', ['filter' => 'cors', 'authFilter']);
 $routes->match(['get', 'options'], 'todolist', 'TodoController::index', ['filter' => 'cors', 'authFilter']);
 $routes->match(['get', 'options'], 'todolist/sampah', 'TodoController::getTrash', ['filter' => 'cors', 'authFilter']);
 $routes->match(['get', 'options'], 'todolist/favorite', 'TodoController::getFavorite', ['filter' => 'cors', 'authFilter']);
@@ -51,12 +49,33 @@ $routes->match(['delete', 'options'], 'todolist/delete/(:segment)', 'TodoControl
 
 $routes->match(['post', 'options'], 'tugas/new/(:num)', 'TugasController::create/$1', ['filter' => 'cors', 'authFilter']);
 $routes->match(['get', 'options'], 'tugas', 'TugasController::index', ['filter' => 'cors', 'authFilter']);
-// $routes->match(['get', 'options'], 'todolist', 'TodoController::getTrash', ['filter' => 'cors', 'authFilter']);
 $routes->match(['put', 'options'], 'tugas/edit/(:segment)', 'TugasControllerr::update/$1', ['filter' => 'cors', 'authFilter']);
-// $routes->match(['put', 'options'], 'todolist/sampah/(:segment)', 'TodoControllerr::trash/$1', ['filter' => 'cors', 'authFilter']);
-// $routes->match(['put', 'options'], 'todolist/restore/(:segment)', 'TodoControllerr::restore/$1', ['filter' => 'cors', 'authFilter']);
 $routes->match(['delete', 'options'], 'tugas/delete/(:segment)', 'TugasControllerr::delete/$1', ['filter' => 'cors', 'authFilter']);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$routes->match(['get', 'options'], 'user/getUserData', 'UserController::getUserData');
+$routes->match(['put', 'options'], 'user/update/(:segment)', 'UserController::update/$1');
+$routes->match(['delete', 'options'], 'user/delete/(:segment)', 'UserController::delete/$1');
 
 $routes->group('user', function($routes) {
     // Rute untuk Sign Up (Membuat pengguna baru)
